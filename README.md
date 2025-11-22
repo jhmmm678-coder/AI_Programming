@@ -86,8 +86,6 @@ The overall pipeline is:
 EF2039_Proj01_YourID_YourName/
 ├── app.py                # Streamlit app (UI + visualization)
 ├── analysis.py           # Sentiment and tagging logic with FinBERT
-├── data/
-│   └── sample_news.csv   # Example labeled dataset for evaluation
 ├── requirements.txt      # Python dependencies
 ├── README.md             # Project description (this file)
 └── .gitignore            # Optional, ignore venv and cache files

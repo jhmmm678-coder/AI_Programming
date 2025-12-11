@@ -2,6 +2,20 @@
 __pycache__/
 *.py[codz]
 *$py.class
+*.pyc
+
+# Virtual env
+.venv/
+env/
+
+# Model & scaler
+checkpoints/
+*.pt
+*.pth
+*.pkl
+
+# Data you don't want on git
+data/raw/
 
 # C extensions
 *.so

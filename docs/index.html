@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <title>AI-Powered Financial News Sentiment Dashboard | EF2039 Project 1</title>
+
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:rgba(255,255,255,.06);
+      --panel2:rgba(255,255,255,.04);
+      --line:rgba(255,255,255,.10);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.72);
+      --muted2:rgba(255,255,255,.58);
+      --shadow:0 14px 40px rgba(0,0,0,.35);
+      --radius:18px;
+
+      --a:#7aa7ff;     /* accent */
+      --b:#5eead4;     /* accent 2 */
+      --c:#a78bfa;     /* accent 3 */
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    [data-theme="light"]{
+      --bg:#f7f8fc;
+      --panel:rgba(20,30,60,.06);
+      --panel2:rgba(20,30,60,.045);
+      --line:rgba(20,30,60,.12);
+      --text:rgba(10,16,30,.92);
+      --muted:rgba(10,16,30,.70);
+      --muted2:rgba(10,16,30,.56);
+      --shadow:0 16px 46px rgba(10,16,30,.14);
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1100px 520px at 15% -10%, color-mix(in srgb, var(--a) 26%, transparent), transparent 60%),
+        radial-gradient(900px 520px at 100% 10%, color-mix(in srgb, var(--b) 18%, transparent), transparent 55%),
+        radial-gradient(900px 560px at 50% 115%, color-mix(in srgb, var(--c) 14%, transparent), transparent 60%),
+        var(--bg);
+    }
+    a{color:var(--a); text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    .wrap{max-width:1180px; margin:0 auto; padding:22px 16px 54px}
+
+    /* Top bar */
+    .top{
+      position:sticky; top:10px; z-index:50;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background: color-mix(in srgb, var(--panel) 85%, transparent);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 26px rgba(0,0,0,.18);
+    }
+    .brand{display:flex; align-items:center; gap:10px; min-width:230px}
+    .logo{
+      width:34px; height:34px; border-radius:12px;
+      background: linear-gradient(135deg, var(--a), var(--b));
+      box-shadow: 0 10px 26px rgba(0,0,0,.20);
+    }
+    .brand .t1{font-weight:800; letter-spacing:.2px; line-height:1.05}
+    .brand .t2{font-size:12px; color:var(--muted2); margin-top:1px}
+
+    .nav{
+      display:flex; gap:12px; flex-wrap:wrap;
+      justify-content:center; align-items:center;
+      font-size:13px; color:var(--muted);
+    }
+    .nav a{color:var(--muted); padding:6px 8px; border-radius:999px}
+    .nav a:hover{background:var(--panel2); text-decoration:none; color:var(--text)}
+
+    .actions{display:flex; align-items:center; gap:8px; min-width:250px; justify-content:flex-end}
+    .btn{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 11px; border-radius:999px;
+      border:1px solid var(--line);
+      background:var(--panel2);
+      color:var(--text);
+      font-size:13px; cursor:pointer; user-select:none;
+      transition: transform .12s ease, background .12s ease;
+    }
+    .btn:hover{background:var(--panel); transform: translateY(-1px); text-decoration:none}
+    .btn.primary{
+      border-color: color-mix(in srgb, var(--a) 60%, var(--line));
+      background: linear-gradient(135deg, color-mix(in srgb, var(--a) 32%, transparent), color-mix(in srgb, var(--b) 22%, transparent));
+    }
+    .btn small{color:var(--muted2)}
+
+    /* Hero */
+    .hero{
+      margin-top:16px;
+      padding:20px;
+      border-radius:var(--radius);
+      border:1px solid var(--line);
+      background: color-mix(in srgb, var(--panel) 90%, transparent);
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .hero::before{
+      content:"";
+      position:absolute; inset:-1px;
+      background:
+        radial-gradient(700px 220px at 20% 0%, color-mix(in srgb, var(--a) 22%, transparent), transparent 65%),
+        radial-gradient(520px 220px at 88% 15%, color-mix(in srgb, var(--b) 18%, transparent), transparent 60%);
+      pointer-events:none; opacity:.9;
+    }
+    .hero > *{position:relative; z-index:1}
+
+    .heroGrid{display:grid; grid-template-columns: 1.35fr .65fr; gap:14px; align-items:start}
+    @media(max-width:980px){
+      .heroGrid{grid-template-columns:1fr}
+      .actions,.brand{min-width:auto}
+    }
+
+    h1{margin:0 0 10px; font-size:36px; line-height:1.1; letter-spacing:.2px}
+    .subtitle{margin:0; color:var(--muted); font-size:15.5px; line-height:1.6; max-width:74ch}
+
+    .chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:14px}
+    .chip{
+      display:inline-flex; gap:8px; align-items:center;
+      padding:7px 10px; border-radius:999px;
+      border:1px solid var(--line);
+      background:var(--panel2);
+      color:var(--muted);
+      font-size:13px;
+    }
+    .dot{width:9px; height:9px; border-radius:999px; display:inline-block; background:var(--b)}
+
+    .metaCard{
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background: color-mix(in srgb, var(--panel2) 95%, transparent);
+      padding:14px;
+    }
+    .metaRow{display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px dashed var(--line)}
+    .metaRow:last-child{border-bottom:none}
+    .metaRow span{color:var(--muted2); font-size:12px}
+    .metaRow b{font-size:13.5px}
+
+    /* Sections */
+    .section{
+      margin-top:16px;
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:var(--panel2);
+      padding:16px;
+    }
+    .section h2{margin:0 0 10px; font-size:18px; letter-spacing:.2px}
+    .section p{margin:8px 0 0; color:var(--muted)}
+    .grid2{margin-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:14px}
+    @media(max-width:980px){.grid2{grid-template-columns:1fr}}
+
+    .card{
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background: color-mix(in srgb, var(--panel) 86%, transparent);
+      padding:14px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.12);
+    }
+    .card h3{margin:0 0 8px; font-size:15px}
+    .card ul{margin:8px 0 0 18px; color:var(--muted)}
+    .card li{margin:6px 0}
+
+    .pipeline{
+      display:grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap:10px;
+      margin-top:12px;
+    }
+    @media(max-width:980px){.pipeline{grid-template-columns:1fr 1fr}}
+    @media(max-width:520px){.pipeline{grid-template-columns:1fr}}
+
+    .step{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      background: color-mix(in srgb, var(--panel) 86%, transparent);
+      position:relative;
+      overflow:hidden;
+    }
+    .step::before{
+      content:"";
+      position:absolute; inset:-1px;
+      background: radial-gradient(500px 150px at 10% 0%, color-mix(in srgb, var(--c) 16%, transparent), transparent 60%);
+      opacity:.55; pointer-events:none;
+    }
+    .step > *{position:relative; z-index:1}
+    .num{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:28px; height:28px; border-radius:10px;
+      background: rgba(255,255,255,.08);
+      border:1px solid var(--line);
+      font-weight:800; margin-bottom:8px;
+    }
+    .step b{display:block; margin-bottom:6px}
+    .step p{margin:0; color:var(--muted); font-size:13px; line-height:1.5}
+
+    .code{
+      margin-top:10px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background: rgba(0,0,0,.22);
+      padding:12px;
+      font-family:var(--mono);
+      font-size:12.8px;
+      color: color-mix(in srgb, var(--text) 92%, transparent);
+      overflow:auto;
+    }
+
+    .figGrid{margin-top:12px; display:grid; grid-template-columns:1fr 1fr; gap:14px}
+    @media(max-width:980px){.figGrid{grid-template-columns:1fr}}
+
+    .figure{
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background: color-mix(in srgb, var(--panel) 88%, transparent);
+      padding:10px;
+    }
+    .figure img{
+      width:100%; display:block;
+      border-radius:14px;
+      border:1px solid color-mix(in srgb, var(--line) 90%, transparent);
+    }
+    .ph{
+      border-radius:14px;
+      border:1px solid color-mix(in srgb, var(--line) 90%, transparent);
+      background: linear-gradient(135deg,
+        color-mix(in srgb, var(--a) 18%, transparent),
+        color-mix(in srgb, var(--b) 12%, transparent));
+      height:260px;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--muted2); font-size:13px; text-align:center;
+      padding:14px;
+    }
+    .cap{margin-top:8px; font-size:12px; color:var(--muted2); line-height:1.45}
+
+    .footer{
+      margin-top:16px;
+      padding:14px;
+      border-radius:var(--radius);
+      border:1px solid var(--line);
+      background:var(--panel2);
+      color:var(--muted2);
+      font-size:12.5px;
+      display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div class="t1">Financial News Sentiment Dashboard</div>
+          <div class="t2">EF2039 AI Programming · Project 1</div>
+        </div>
+      </div>
+
+      <div class="nav">
+        <a href="#overview">Overview</a>
+        <a href="#model">AI Model</a>
+        <a href="#pipeline">Pipeline</a>
+        <a href="#ui">Dashboard</a>
+        <a href="#usage">How to Run</a>
+        <a href="#structure">Structure</a>
+      </div>
+
+      <div class="actions">
+        <!-- Update this link if your repo name differs -->
+        <a class="btn primary" href="https://github.com/jhmmm678-coder/AI_Programming" target="_blank" rel="noreferrer">Repo</a>
+        <button class="btn" id="themeBtn" type="button" aria-label="Toggle theme">
+          Theme <small id="themeLabel">(auto)</small>
+        </button>
+      </div>
+    </div>
+
+    <section class="hero" id="overview">
+      <div class="heroGrid">
+        <div>
+          <h1>AI-Powered Financial News Sentiment Dashboard</h1>
+          <p class="subtitle">
+            A lightweight dashboard that analyzes financial news headlines/summaries using a pre-trained model
+            (<b>FinBERT</b>) and assigns both <b>sentiment</b> (negative / neutral / positive) and simple <b>issue tags</b>.
+            It helps retail investors quickly capture market mood and key issues without reading every article.
+          </p>
+
+          <div class="chips" aria-label="Key highlights">
+            <span class="chip"><span class="dot"></span>Model: ProsusAI/finbert</span>
+            <span class="chip"><span class="dot"></span>App: Streamlit</span>
+            <span class="chip"><span class="dot"></span>Input: CSV upload or manual paste</span>
+            <span class="chip"><span class="dot"></span>Output: charts + table + CSV download</span>
+          </div>
+
+          <div class="section" style="margin-top:14px;">
+            <h2>Issue Tags (Rule-based)</h2>
+            <div class="grid2">
+              <div class="card">
+                <h3>Regulation / Legal Risk</h3>
+                <ul>
+                  <li>keywords: lawsuit, regulation, fine, etc.</li>
+                </ul>
+              </div>
+              <div class="card">
+                <h3>Earnings</h3>
+                <ul>
+                  <li>keywords: earnings, profit, loss, etc.</li>
+                </ul>
+              </div>
+              <div class="card">
+                <h3>Growth</h3>
+                <ul>
+                  <li>keywords: growth, market share, etc.</li>
+                </ul>
+              </div>
+              <div class="card">
+                <h3>ESG / Climate</h3>
+                <ul>
+                  <li>keywords: carbon, renewable, solar, etc.</li>
+                </ul>
+              </div>
+            </div>
+            <p style="margin-top:10px;">
+              If no keyword matches, the tag defaults to <b>Other</b>.
+            </p>
+          </div>
+        </div>
+
+        <aside class="metaCard" aria-label="Project metadata">
+          <div class="metaRow"><span>Student</span><b>Jungho Moon (20240110)</b></div>
+          <div class="metaRow"><span>Course</span><b>EF2039 AI Programming</b></div>
+          <div class="metaRow"><span>Core AI</span><b>FinBERT (pre-trained)</b></div>
+          <div class="metaRow"><span>UI</span><b>Streamlit dashboard</b></div>
+          <div class="metaRow"><span>Outputs</span><b>sentiment + tag + charts</b></div>
+          <div class="metaRow"><span>Deliverables</span><b>poster + webpage</b></div>
+
+          <div class="section" style="margin-top:12px;">
+            <h2 style="margin-bottom:6px;">One-line Contribution</h2>
+            <p>
+              Combine a <b>domain-specific transformer</b> (FinBERT) with simple <b>issue tagging</b> to create an
+              interpretable news analysis tool for investors.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section" id="model">
+      <h2>AI Model & Motivation</h2>
+      <div class="grid2">
+        <div class="card">
+          <h3>Model: ProsusAI/finbert</h3>
+          <ul>
+            <li>BERT-based transformer specialized for financial sentiment</li>
+            <li>Outputs class probabilities: negative / neutral / positive</li>
+            <li>Used as <b>pre-trained weights</b> (no training from scratch)</li>
+          </ul>
+          <p style="margin-top:10px; color:var(--muted);">
+            FinBERT is preferred over generic sentiment models because it is trained on financial domain text.
+          </p>
+        </div>
+        <div class="card">
+          <h3>How it is used</h3>
+          <ul>
+            <li>Tokenize each news text</li>
+            <li>Forward pass through FinBERT</li>
+            <li>Get probabilities (neg/neu/pos)</li>
+            <li>Choose label with highest probability</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="pipeline">
+      <h2>System Pipeline</h2>
+      <div class="pipeline">
+        <div class="step">
+          <div class="num">1</div>
+          <b>Input</b>
+          <p>Upload CSV (with <code>text</code> column) or paste texts (one per line).</p>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <b>Preprocess</b>
+          <p>Lowercase internally; truncate to max length (256 tokens).</p>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <b>FinBERT</b>
+          <p>Predict sentiment label + probability for each news item.</p>
+        </div>
+        <div class="step">
+          <div class="num">4</div>
+          <b>Issue Tagging</b>
+          <p>Keyword rules assign tags (Legal/Earnings/Growth/ESG/Other).</p>
+        </div>
+        <div class="step">
+          <div class="num">5</div>
+          <b>Aggregate</b>
+          <p>Count sentiments + tags; summarize overall mood and issues.</p>
+        </div>
+        <div class="step">
+          <div class="num">6</div>
+          <b>Visualize</b>
+          <p>Bar charts + detailed table; allow CSV download of results.</p>
+        </div>
+      </div>
+
+      <div class="code" aria-label="Pipeline pseudo">
+Input: CSV or pasted texts
+→ preprocess (lowercase, truncate)
+→ FinBERT sentiment (neg/neu/pos + probs)
+→ rule-based issue tag
+→ aggregation (counts)
+→ Streamlit UI (charts + table + download)
+      </div>
+    </section>
+
+    <section class="section" id="ui">
+      <h2>Dashboard Preview</h2>
+      <p>
+        Add a screenshot of your Streamlit UI to make the webpage more convincing (bonus-friendly).
+      </p>
+
+      <div class="figGrid">
+        <div class="figure">
+          <img src="assets/dashboard.png" alt="Streamlit dashboard screenshot"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+          <div class="ph" style="display:none;">
+            Upload your dashboard screenshot to:<br/>
+            <code>docs/assets/dashboard.png</code>
+          </div>
+          <div class="cap">
+            <b>Streamlit UI</b>: sentiment distribution, issue tags, and a detailed table with download.
+          </div>
+        </div>
+
+        <div class="figure">
+          <img src="assets/pipeline.png" alt="Pipeline figure"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+          <div class="ph" style="display:none;">
+            (Optional) Add a pipeline diagram to:<br/>
+            <code>docs/assets/pipeline.png</code>
+          </div>
+          <div class="cap">
+            Optional: a single figure that illustrates your end-to-end workflow.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="usage">
+      <h2>How to Run Locally</h2>
+      <div class="grid2">
+        <div class="card">
+          <h3>Install</h3>
+          <div class="code">
+python -m venv .venv
+# Windows:
+.\.venv\Scripts\activate
+# macOS/Linux:
+# source .venv/bin/activate
+
+pip install -r requirements.txt
+          </div>
+        </div>
+        <div class="card">
+          <h3>Launch Streamlit</h3>
+          <div class="code">
+streamlit run app.py
+          </div>
+          <p style="margin-top:10px;">
+            Input either a CSV file (must include a <code>text</code> column) or paste news texts manually.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="structure">
+      <h2>Project Structure</h2>
+      <div class="code">
+EF2039_Proj01_20240110_JunghoMoon/
+├── app.py                # Streamlit app (UI + visualization)
+├── analysis.py           # Sentiment + issue tagging logic (FinBERT)
+├── data/
+│   └── sample_news.csv   # Example data
+├── requirements.txt      # Dependencies
+├── README.md
+└── .gitignore
+      </div>
+
+      <div class="grid2" style="margin-top:14px;">
+        <div class="card">
+          <h3>Input Requirements</h3>
+          <ul>
+            <li>CSV upload must contain a <code>text</code> column</li>
+            <li>Manual input: one news item per line</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Outputs</h3>
+          <ul>
+            <li>Per-item sentiment label + probabilities</li>
+            <li>Issue tag per item</li>
+            <li>Aggregated charts + downloadable CSV</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">
+      <div>
+        <b>Repo:</b>
+        <a href="https://github.com/jhmmm678-coder/AI_Programming" target="_blank" rel="noreferrer">
+          jhmmm678-coder/AI_Programming
+        </a>
+      </div>
+      <div><b>Tip:</b> If the page doesn’t update, hard refresh (Ctrl+F5) after deployment.</div>
+    </div>
+  </div>
+
+  <script>
+    const root = document.documentElement;
+    const btn = document.getElementById('themeBtn');
+    const label = document.getElementById('themeLabel');
+
+    const saved = localStorage.getItem('theme_pref');
+    if(saved){ root.setAttribute('data-theme', saved); label.textContent = `(${saved})`; }
+
+    btn.addEventListener('click', () => {
+      const cur = root.getAttribute('data-theme');
+      const next = (cur === 'light') ? 'dark' : 'light';
+      root.setAttribute('data-theme', next);
+      localStorage.setItem('theme_pref', next);
+      label.textContent = `(${next})`;
+    });
+  </script>
+</body>
+</html>
